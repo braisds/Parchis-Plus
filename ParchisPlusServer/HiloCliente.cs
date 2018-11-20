@@ -11,6 +11,7 @@ namespace ParchisPlusServer
 {
     class HiloCliente
     {
+        public static readonly Object lockListaEspera = new object();
         Socket socketCliente;
         IPEndPoint ieCliente;
         NetworkStream ns;
@@ -18,6 +19,8 @@ namespace ParchisPlusServer
         StreamWriter sw;
         string mensaje;
         string mensajeRespuesta;
+        private Cliente cliente;
+        private Partida partidaActual;
 
 
         public HiloCliente(Socket socket)
@@ -48,17 +51,7 @@ namespace ParchisPlusServer
                         }
                             
                         InterpretarMensaje();
-                        if (mensajeRespuesta != null)
-                        {
-                            lock (Server.l) { 
 
-                                Console.WriteLine("Mensaje Respuesta: " + mensaje);
-                            }
-                            sw.WriteLine(mensajeRespuesta);//Enviar
-                            sw.Flush();
-                            
-                            
-                        }
                     }
 
                 }
@@ -93,10 +86,15 @@ namespace ParchisPlusServer
         private void InterpretarMensaje()
         {
             //COMANDO:PARAMENTO1,PARAMETRO2,...
-            String[] array = mensaje.Split(':');
-            String comando = array[0];
-            String parametros = array[1];
-            Console.WriteLine("cmado: " + comando + " param" + parametros);
+            string[] array = mensaje.Split(':');
+            string comando = array[0];
+            string parametros = "";
+            if (array.Length == 2)
+            {
+                parametros = array[1];
+            }
+            
+            Console.WriteLine("comado: " + comando + " param" + parametros);
             switch (comando)
             {
                 case "LOGIN":
@@ -105,6 +103,9 @@ namespace ParchisPlusServer
                 case "CERRARSESION":
                     cerrarSesion(parametros);
                     break;
+                case "REGISTRO":
+                    registro(parametros);
+                    break;
                 case "TIRAR":
                     //tirarDado(parametros);
                     break;
@@ -112,7 +113,10 @@ namespace ParchisPlusServer
                     //moverPieza(parametros);
                     break;
                 case "NUEVOJUEGO":
-                    //NuevoJuego(parametros);
+                    NuevoJuego();
+                    break;
+                case "NUEVOJUEGOCANCELAR":
+                    //NuevoJuegoCancelar(parametros);
                     break;
                 default:
                     Console.WriteLine("COMANDO NO VALIDO");
@@ -125,19 +129,18 @@ namespace ParchisPlusServer
         {
             mensajeRespuesta = "LOGIN:FALLO";
             string[] valores = parametros.Split(',');
-            if (Server.bd.loginUsuario(valores[0], valores[1]))
+            //if (Server.bd.loginUsuario(valores[0], valores[1]))
+            if (valores[0] == "abc" && valores[1] == "123")
             {
                 mensajeRespuesta = "LOGIN:OK";
                 lock (Server.l)
                 {
-                    Server.jugadores.Add(new Cliente(socketCliente, Server.bd.getUsuario(valores[0])));
+                    cliente = new Cliente(socketCliente, new Usuario(1, "abc", 100)/*Server.bd.getUsuario(valores[0])*/);
+                    Server.jugadores.Add(cliente);
                 }
 
-                foreach (Cliente a in Server.jugadores)
-                {
-                    Console.WriteLine("cliente "+a.Usuario.Nombre+" " + a.Usuario.CodUsuario);
-                }
             }
+            enviar(mensajeRespuesta);
 
         }
 
@@ -155,11 +158,22 @@ namespace ParchisPlusServer
             return mensajeRespuesta;
 
         }
+        //usuario - contraseña
+        private void registro(string mensaje)
+        {
+            Console.WriteLine("REGISTRO");
+            string[] valores = mensaje.Split(',');
+            if (Server.bd.getUsuario != null)
+            {
+                
+            }
+        }
 
-        //
+        
         private void tirarDado(string mensaje)
         {
             //sw.WriteLine("TIRAR");
+
 
         }
 
@@ -171,10 +185,40 @@ namespace ParchisPlusServer
         }
 
 
-        private void NuevoJuego(string mensaje)
+        private void NuevoJuego()
         {
             //sw.WriteLine("NUEVOJUEGO");
+            lock (lockListaEspera)
+            {
+                Server.listaEspera.Add(cliente);
+                //TODO:Añadir a bd
+                enviar("NUEVOJUEGO:listaEsperaOK");
 
+                if (Server.listaEspera.Count == 4)
+                {
+
+                    //Todo: insert bd partida para consegir el id y quitar el 0
+                    Server.partidas.Add(new Partida(0, Server.listaEspera));
+
+                    partidaActual = Server.partidas[Server.partidas.Count - 1];
+
+                    //NUEVOJUEGOOK:idPartida,jugador0,jugador1,jugador2,jugador3
+                    string msj = string.Format("NUEVOJUEGOOK:{0},", partidaActual.partidaID);
+                    foreach (Cliente p in partidaActual.participantes)
+                    {
+                        msj += p.Usuario.Nombre+",";
+                    }
+
+                    Server.enviarMensajeVarios(msj, Server.listaEspera);
+                    Server.listaEspera.Clear();
+                }
+            }
+        }
+
+        private void enviar(string mensaje)
+        {
+            sw.WriteLine(mensaje);
+            sw.Flush();
         }
 
     }

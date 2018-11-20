@@ -25,21 +25,32 @@ namespace ParchisPlusCliente
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            loginOk = false;
-            Login l = new Login();
+            c = new Cliente();
+            c.conectarServidor();
 
+            loginOk = false;
+            
             while (!loginOk)
             {
+                Console.WriteLine("refre");
+                Login l = new Login();
                 DialogResult res = l.ShowDialog();
-
+                
                 if (res == DialogResult.OK)
                 {
                     string nombre = l.txtUsuario.Text;
                     string contraseña = l.txtContraseña.Text;
 
-                    c = new Cliente();
-                    c.conectarServidor();
-                    c.mandarMensaje("LOGIN:" + nombre + "," + contraseña);
+                    if (nombre != null && contraseña != null)
+                    {
+                        
+                        c.mandarMensaje("LOGIN:" + nombre + "," + contraseña);
+                    }
+                    else
+                    {
+                        l.lblError.Text = "Inserte el nombre y la contraseña";
+                    }
+                    
                 }
                 else
                 {
@@ -49,6 +60,8 @@ namespace ParchisPlusCliente
             
         }
 
+        
+
         private void loginRespuesta(String mensajeRespuesta)
         {
 
@@ -56,8 +69,22 @@ namespace ParchisPlusCliente
             {
                 loginOk = true;
             }
+            else
+            {
+                
+            }
 
 
+        }
+
+        private void nuevoJuegoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            c.mandarMensaje("NUEVOJUEGO:");
+        }
+
+        private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
+        {
+            Console.WriteLine("X: " + e.X + " Y: " + e.Y);
         }
     }
 }

@@ -7,6 +7,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParchisPlusServer", "Parchi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParchisPlusCliente", "ParchisPlusCliente\ParchisPlusCliente.csproj", "{00E0CF64-23E6-4B0F-B927-AC0A9710C11B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4AF7FD0C-7E84-4B80-B4A0-670F031F95D9}"
+	ProjectSection(SolutionItems) = preProject
+		Cambios.txt = Cambios.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -17,11 +17,13 @@ namespace ParchisPlusServer
         public static ManejadorBaseDeDatos bd;
         public static List<Cliente> jugadores;
         public static List<Partida> partidas;
+        public static List<Cliente> listaEspera;
 
         public Server()
         {
             jugadores = new List<Cliente>();
             partidas = new List<Partida>();
+            listaEspera = new List<Cliente>();
 
             bd = new ManejadorBaseDeDatos();
             bd.conectar();
@@ -44,6 +46,29 @@ namespace ParchisPlusServer
             }
         }
 
-        
+        public static void enviarMensajeVarios(string mensaje, List<Cliente> clientes)
+        {
+            NetworkStream ns = null;
+            StreamWriter sw = null;
+
+            foreach (Cliente c in clientes)
+            {
+                ns = new NetworkStream(c.SocketCliente);
+                sw = new StreamWriter(ns);
+
+                sw.WriteLine(mensaje);
+            }
+
+            if (sw!=null)
+            {
+                sw.Close();
+            }
+            if (ns!=null)
+            {
+                ns.Close();
+            }
+        }
+
+
     }
 }

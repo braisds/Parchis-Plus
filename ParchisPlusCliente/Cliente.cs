@@ -18,8 +18,13 @@ namespace ParchisPlusCliente
         NetworkStream ns=null;
         StreamReader sr=null;
         StreamWriter sw=null;
-        string mensajeEnviar;
-        public string mensajeRespuesta;
+        public string mensaje;
+        Thread hiloRecibir;
+
+        public Cliente()
+        {
+            conectarServidor();
+        }
 
         public void conectarServidor()
         {
@@ -35,70 +40,53 @@ namespace ParchisPlusCliente
                 sw = new StreamWriter(ns);
                 sr = new StreamReader(ns);
 
-                while (true)
-                {
-                    if (mensajeEnviar != null)
-                    {
-                        mandarMensaje(mensajeEnviar);
+                hiloRecibir = new Thread(new ThreadStart(HiloRecibir));
+                hiloRecibir.Start();
 
-                        mensajeRespuesta = sr.ReadLine();
-                        if (mensajeRespuesta != null)
-                        {
-                            InterpretarMensaje(mensajeRespuesta);
-                        }
-                    }
-                    else
-                    {
-
-                    }
-
-                    
-                }
-
-
+                Principal p = new Principal();
+                p.Show();
             }
-            catch (SocketException e)
+            catch (SocketException)
             {
-
+                cerrarConexion();
             }
 
-            finally
-            {
-                if (sw != null)
-                {
-                    sw.Close();
-                }
-                if (sr != null)
-                {
-                    sr.Close();
-                }
-                if (ns != null)
-                {
-                    ns.Close();
-                }
-                if (servidor != null)
-                {
-                    servidor.Close();
-                }
-
-            }
         }
 
+        public void HiloRecibir()
+        {
+            while (true)
+            {
+                mensaje = sr.ReadLine();
+
+                if (mensaje != null)
+                {
+                    InterpretarMensaje(mensaje);
+                }
+
+            }
+
+        }
 
 
         public void mandarMensaje(string mensaje)
         {
             sw.WriteLine(mensaje);
+            Console.WriteLine(mensaje);
             sw.Flush();
         }
 
         private void InterpretarMensaje(string mensaje)
         {
             Console.WriteLine(mensaje);
-            String[] array = mensaje.Split(':');
-            String comando = array[0];
-            String parametros = array[1];
-
+            string[] array = mensaje.Split(':');
+            string comando = array[0];
+            string parametros = "";
+            if (array.Length == 2 )
+            {
+                parametros = array[1];
+            }
+            
             switch (comando)
             {
                 case "LOGIN":
@@ -157,6 +145,27 @@ namespace ParchisPlusCliente
 
         }
 
+
+        private void cerrarConexion()
+        {
+            if (sw != null)
+            {
+                sw.Close();
+            }
+            if (sr != null)
+            {
+                sr.Close();
+            }
+            if (ns != null)
+            {
+                ns.Close();
+            }
+            if (servidor != null)
+            {
+                servidor.Close();
+            }
+
+        }
 
     }
 }
